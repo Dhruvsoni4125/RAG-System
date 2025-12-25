@@ -4,7 +4,7 @@ from io import BytesIO
 
 import google.generativeai as genai
 
-# Optional file readers
+# Optional readers
 try:
     from pypdf import PdfReader
 except:
@@ -47,8 +47,8 @@ def read_document_content(uploaded_file):
 
 
 # ---------------- CONFIG ----------------
-API_KEY = os.getenv("API_KEY")  # <-- Streamlit Secrets
-MODEL_NAME = "gemini-1.5-flash"
+API_KEY = os.getenv("API_KEY")   # Streamlit Secrets
+MODEL_NAME = "gemini-1.5-flash-latest"
 
 if not API_KEY:
     st.error("API_KEY not found. Add it in Streamlit Secrets.")
@@ -59,15 +59,15 @@ genai.configure(api_key=API_KEY)
 
 # ---------------- STREAMLIT UI ----------------
 st.set_page_config(page_title="Gemini RAG", layout="wide")
-st.title("📄 RAG System – Document-based Q&A (Gemini)")
+st.title("📄 RAG System – Document-based Q&A")
 
-st.markdown("""
-Upload a document and ask questions.  
-The model answers **ONLY from the uploaded document**.
-""")
+st.markdown(
+    "Upload a document and ask questions. "
+    "**The model answers ONLY from the document.**"
+)
 
 
-# Session state
+# ---------------- SESSION STATE ----------------
 if "doc_text" not in st.session_state:
     st.session_state.doc_text = ""
 
@@ -95,7 +95,7 @@ if uploaded_file:
         st.text(content[:2000])
 
 
-if not st.session_state.doc_text:
+if not st.session_state.doc_text.strip():
     st.info("Please upload a document to continue.")
     st.stop()
 
@@ -115,6 +115,9 @@ if st.button("Get Answer", type="primary"):
         with st.spinner("Generating answer..."):
             model = genai.GenerativeModel(MODEL_NAME)
 
+            # 🔒 LIMIT CONTEXT SIZE (CRITICAL FIX)
+            document_context = st.session_state.doc_text[:12000]
+
             prompt = f"""
 You are a strict RAG system.
 
@@ -123,7 +126,7 @@ If the answer is not present, reply exactly:
 "I cannot find the answer in the provided document."
 
 DOCUMENT:
-{st.session_state.doc_text}
+{document_context}
 
 QUESTION:
 {question}
