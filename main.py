@@ -2,7 +2,7 @@ import streamlit as st
 import os
 from typing import Optional
 from io import BytesIO
-from google import genai
+import google.generativeai as genai
 from google.genai.errors import APIError
 from hugchat.hugchat import Model
 
